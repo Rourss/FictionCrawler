@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConnectionTimeout.cs" />
     <Compile Include="NoFound.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
