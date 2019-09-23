@@ -27,22 +27,29 @@ namespace FictionCrawler
             GetBookInfoByHtml.bookIDCover.Clear();
             pbFiction.WaitOnLoad = false;
             pbFiction.UseWaitCursor = true;
-            string path = "D:\\GitRepository\\FictionCrawler\\FictionCrawler\\/Fiction/";
-            if (Directory.Exists(path) == false)
+            DriveInfo[] dri = DriveInfo.GetDrives();
+            foreach (var item in dri)
             {
-                Directory.CreateDirectory(path);
+                if (item.Name =="D:\\")
+                {
+                    DirectoryInfo info = Directory.CreateDirectory(item.Name + "\\Fiction");
+                }
             }
-            else
-            {
-                
-            }
+            //string path = "D:\\GitRepository\\FictionCrawler\\FictionCrawler\\/Fiction/";
+            //if (Directory.Exists(path) == false)
+            //{
+            //    Directory.CreateDirectory(path);
+            //}
         }
         private void btnStart_Click(object sender, EventArgs e)
         {
-            string path = "D:\\GitRepository\\FictionCrawler\\FictionCrawler\\/Fiction/";
-            if (Directory.Exists(path) == false)
+            DriveInfo[] dri = DriveInfo.GetDrives();
+            foreach (var item in dri)
             {
-                Directory.CreateDirectory(path);
+                if (item.Name == "D:\\")
+                {
+                    DirectoryInfo info = Directory.CreateDirectory(item.Name + "\\Fiction");
+                }
             }
             string url = "";
             if (txtURL.Text != "")
@@ -55,71 +62,35 @@ namespace FictionCrawler
             }
             try
             {
-                Task startBook = new Task(() => { });
-                List<Task> list = new List<Task>();
-                CancellationTokenSource token = new CancellationTokenSource();
+                GetHtmlByURL html = new GetHtmlByURL();
+                string fictionhtml = "";
+                int page = 1;
+                Thread startBook = new Thread(() =>
+                {
+                    try
+                    {
+                        while (page < 6)
+                        {
+                            fictionhtml = html.Html(page, url);
+                            BookInfo(fictionhtml);
+                            MessageBox.Show("第" + page + "页爬取完成!");
+                            page++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("出现：" + ex.Message + " 错误" + "\r\n爬取已取消!");
+                    }
+                });
                 if (btnStart.Text == "开始")
                 {
-                    //Dispose(true);
-                    GetHtmlByURL html = new GetHtmlByURL();
-                    string fictionhtml = "";
                     btnStart.Text = "停止";
                     btnClear.Enabled = false;
-                    int page = 1;
-                    startBook = new Task(() =>
-                    {
-                        try
-                        {
-                            if (token.IsCancellationRequested)
-                            {
-                                token.Token.ThrowIfCancellationRequested();
-                            }
-                            while (page < 3)
-                            {
-                                fictionhtml = html.Html(page, url);
-                                BookInfo(fictionhtml);
-                                MessageBox.Show("第" + page + "页爬取完成!");
-                                page++;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("出现："+ex.Message+" 错误"+"\r\n爬取已取消!");
-                        }
-                    },token.Token);
                     startBook.Start();
-                    //while (index < 3)
-                    //{
-                    //    fictionhtml = html.Html(index, url);
-
-                    //    startBook = new Task(() =>
-                    //    {
-                    //        try
-                    //        {
-                    //            if (token.IsCancellationRequested)
-                    //            {
-                    //                token.Token.ThrowIfCancellationRequested();
-                    //            }
-                    //            BookInfo(fictionhtml);
-                    //            MessageBox.Show("第" + page + "页爬取完成!");
-                    //            page++;
-                    //        }
-                    //        catch (OperationCanceledException ex)
-                    //        {
-                    //            MessageBox.Show("线程已取消");
-                    //        }
-
-                    //    },token.Token);
-                    //    startBook.Start();
-                    //    list.Add(startBook);
-                    //    index++;
-                    //}
                 }
                 else
                 {
-                    token.Cancel();
-                    token.Dispose();
-                    //startBook.Dispose();
+                    startBook.Abort();
                     btnStart.Text = "开始";
                     btnClear.Enabled = true;
                 }
@@ -155,10 +126,9 @@ namespace FictionCrawler
                             bookInfo.Add(bookname, intro);
                             getBookInfo.StreamFill(id, bookname, intro);
                             this.Invoke(new Action(() => { lbInfo.Items.Add(bookname); }));
-                        }
-                        else
+                        }else
                         {
-                            throw new NoFound();
+                            MessageBox.Show("未找到书籍!");
                         }
                     }
                 }
@@ -172,19 +142,22 @@ namespace FictionCrawler
         {
             try
             {
-                string path = "D:\\GitRepository\\FictionCrawler\\FictionCrawler\\/Fiction/";
+                string path = "D:\\/Fiction/";
                 if (Directory.Exists(path) == true)
                 {
-                    Directory.Delete(path, true);
-                    bookInfo.Clear();
-                    GetBookInfoByHtml.bookIDCover.Clear();
-                    lbInfo.Items.Clear();
-                    txtBookName.Text = "";
-                    txtBookIntro.Text = "";
-                    pbFiction.Image = null;
-                    if (Directory.Exists(path) == false)
+                    if (MessageBox.Show("确定要删除吗？", "删除保存的书籍", MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
-                        MessageBox.Show("清除成功!");
+                        Directory.Delete(path, true);
+                        bookInfo.Clear();
+                        GetBookInfoByHtml.bookIDCover.Clear();
+                        lbInfo.Items.Clear();
+                        txtBookName.Text = "";
+                        txtBookIntro.Text = "";
+                        pbFiction.Image = null;
+                        if (Directory.Exists(path) == false)
+                        {
+                            MessageBox.Show("清除成功!");
+                        }
                     }
                 }
             }
@@ -214,9 +187,9 @@ namespace FictionCrawler
                     }
                 }
             }
-            catch 
+            catch (Exception ex)
             {
-                throw new NoFound();
+                MessageBox.Show(ex.Message);
             }
         }
     }

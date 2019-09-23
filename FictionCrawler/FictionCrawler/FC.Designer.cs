@@ -136,7 +136,7 @@
             // 
             // txtURL
             // 
-            this.txtURL.Location = new System.Drawing.Point(147, 22);
+            this.txtURL.Location = new System.Drawing.Point(173, 22);
             this.txtURL.Name = "txtURL";
             this.txtURL.Size = new System.Drawing.Size(374, 21);
             this.txtURL.TabIndex = 13;
@@ -144,11 +144,11 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(34, 25);
+            this.label3.Location = new System.Drawing.Point(12, 25);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(107, 12);
+            this.label3.Size = new System.Drawing.Size(155, 12);
             this.label3.TabIndex = 14;
-            this.label3.Text = "请输入要爬的URL：";
+            this.label3.Text = "请输入要爬的URL(带页数)：";
             // 
             // Fiction
             // 

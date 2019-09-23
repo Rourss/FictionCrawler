@@ -59,10 +59,14 @@ namespace FictionCrawler.FictionAccess
         {
             try
             {
-                DirectoryInfo info = Directory.CreateDirectory("D:\\GitRepository\\FictionCrawler\\FictionCrawler\\Fiction\\" + id);
-                StreamWriter sw = new StreamWriter(info.FullName + "\\" + id + ".txt", true);
-                sw.WriteLine(bookname + "\r\n" + bookinfo + "\r\n");
-                sw.Close();
+                string path = "D:\\Fiction";
+                if (Directory.Exists(path))
+                {
+                    DirectoryInfo info = Directory.CreateDirectory(path + "\\" + id);
+                    StreamWriter sw = new StreamWriter(info.FullName + "\\" + id + ".txt", true);
+                    sw.WriteLine(bookname + "\r\n" + bookinfo + "\r\n");
+                    sw.Close();
+                }
             }
             catch
             {
@@ -83,23 +87,25 @@ namespace FictionCrawler.FictionAccess
                 HttpWebRequest http = WebRequest.Create(url) as HttpWebRequest;
                 http.Timeout = 30 * 1000;
                 HttpWebResponse https = http.GetResponse() as HttpWebResponse;
-                
-                DirectoryInfo info = Directory.CreateDirectory("D:\\GitRepository\\FictionCrawler\\FictionCrawler\\Fiction\\" + id);
-                FileStream fs = new FileStream(info.FullName + "\\" + id + ".jpg", FileMode.Create);
 
-                https.GetResponseStream().CopyTo(fs);
-                fs.Close();
-                http.Abort();
-                http = null;
-                https.Close();
-                https = null;
-                bookIDCover.Add(bookname, info.FullName + "\\" + id + ".jpg");
+                string path = "D:\\Fiction";
+                if (Directory.Exists(path))
+                {
+                    DirectoryInfo info = Directory.CreateDirectory(path + "\\" + id);
+                    FileStream fs = new FileStream(info.FullName + "\\" + id + ".jpg", FileMode.Create);
+                    https.GetResponseStream().CopyTo(fs);
+                    fs.Close();
+                    http.Abort();
+                    http = null;
+                    https.Close();
+                    https = null;
+                    bookIDCover.Add(bookname, info.FullName + "\\" + id + ".jpg");
+                }
                 return Convert.ToInt32(id);
             }
             catch
             {
-                MessageBox.Show(new NoCreate().Message);
-                return 0;
+                throw new NoFound();
             }
         }
         /// <summary>
@@ -137,8 +143,7 @@ namespace FictionCrawler.FictionAccess
             }
             catch
             {
-               MessageBox.Show( new ConnectionTimeout().Message);
-               return "";
+                throw new NoFound();
             }
         }
     }
