@@ -55,7 +55,9 @@ namespace FictionCrawler
             }
             try
             {
-                Thread startBook = new Thread(() => { });
+                Task startBook = new Task(() => { });
+                List<Task> list = new List<Task>();
+                CancellationTokenSource token = new CancellationTokenSource();
                 if (btnStart.Text == "开始")
                 {
                     //Dispose(true);
@@ -63,31 +65,61 @@ namespace FictionCrawler
                     string fictionhtml = "";
                     btnStart.Text = "停止";
                     btnClear.Enabled = false;
-                    int index = 1;
                     int page = 1;
-
-                    while (index < 3)
+                    startBook = new Task(() =>
                     {
-                        fictionhtml = html.Html(index, url);
-
-                        startBook = new Thread(() =>
+                        try
                         {
-                            BookInfo(fictionhtml);
-                            MessageBox.Show("第" + page + "页爬取完成!");
-                            page++;
-                        });
-                        startBook.IsBackground = true;
-                        startBook.Start();
-                        MessageBox.Show(Thread.CurrentThread.Name);
-                        index++;
-                    }
+                            if (token.IsCancellationRequested)
+                            {
+                                token.Token.ThrowIfCancellationRequested();
+                            }
+                            while (page < 3)
+                            {
+                                fictionhtml = html.Html(page, url);
+                                BookInfo(fictionhtml);
+                                MessageBox.Show("第" + page + "页爬取完成!");
+                                page++;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("出现："+ex.Message+" 错误"+"\r\n爬取已取消!");
+                        }
+                    },token.Token);
+                    startBook.Start();
+                    //while (index < 3)
+                    //{
+                    //    fictionhtml = html.Html(index, url);
+
+                    //    startBook = new Task(() =>
+                    //    {
+                    //        try
+                    //        {
+                    //            if (token.IsCancellationRequested)
+                    //            {
+                    //                token.Token.ThrowIfCancellationRequested();
+                    //            }
+                    //            BookInfo(fictionhtml);
+                    //            MessageBox.Show("第" + page + "页爬取完成!");
+                    //            page++;
+                    //        }
+                    //        catch (OperationCanceledException ex)
+                    //        {
+                    //            MessageBox.Show("线程已取消");
+                    //        }
+
+                    //    },token.Token);
+                    //    startBook.Start();
+                    //    list.Add(startBook);
+                    //    index++;
+                    //}
                 }
                 else
                 {
-                    MessageBox.Show("??");
-                    startBook.Abort();
-                    startBook.Abort();
-                    //startBook.wait()
+                    token.Cancel();
+                    token.Dispose();
+                    //startBook.Dispose();
                     btnStart.Text = "开始";
                     btnClear.Enabled = true;
                 }
