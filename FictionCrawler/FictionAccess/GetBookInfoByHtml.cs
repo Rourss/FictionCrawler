@@ -74,6 +74,27 @@ namespace FictionCrawler.FictionAccess
             }
         }
         /// <summary>
+        /// 存放爬取到的所有书名
+        /// </summary>
+        /// <param name="bookname"></param>
+        public void StreamAll(string bookname,string intro,string image)
+        {
+            try
+            {
+                string path = "D:\\Fiction";
+                if (Directory.Exists(path))
+                {
+                    StreamWriter sw = new StreamWriter(path+"\\All.txt", true);
+                    sw.WriteLine("书名："+bookname + "封面：" + image + "简介：" + intro);
+                    sw.Close();
+                }
+            }
+            catch
+            {
+                throw new NoCreate();
+            }
+        }
+        /// <summary>
         /// 获取书籍封面的方法
         /// </summary>
         /// <param name="url"></param>

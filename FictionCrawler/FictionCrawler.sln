@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FictionAccess", "FictionAcc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommVerify", "CommVerify\CommVerify.csproj", "{1C6AD22A-4D2A-48C3-926C-453DE0AF686B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Fiction", "Fiction", "{684310D2-760C-494E-B9E8-CBC34140CDEA}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

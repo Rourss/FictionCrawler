@@ -19,27 +19,32 @@ namespace FictionCrawler
     public partial class Fiction : Form
     {
         public Dictionary<string, string> bookInfo = new Dictionary<string, string>();
+        private bool stop;
+        private bool isTrigger;
         public Fiction()
         {
             InitializeComponent();
-            System.GC.Collect();
-            bookInfo.Clear();
-            GetBookInfoByHtml.bookIDCover.Clear();
+            isTrigger = true;
+            stop = false;
             pbFiction.WaitOnLoad = false;
             pbFiction.UseWaitCursor = true;
             DriveInfo[] dri = DriveInfo.GetDrives();
+            string path = "D:\\Fiction";
             foreach (var item in dri)
             {
-                if (item.Name =="D:\\")
+                if (item.Name == "D:\\")
                 {
+                    if (Directory.Exists(path))
+                    {
+                        if (MessageBox.Show("是否加载上次爬到的内容?", "", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                        {
+                            //执行加载方法
+                            Loading();
+                        }
+                    }
                     DirectoryInfo info = Directory.CreateDirectory(item.Name + "\\Fiction");
                 }
             }
-            //string path = "D:\\GitRepository\\FictionCrawler\\FictionCrawler\\/Fiction/";
-            //if (Directory.Exists(path) == false)
-            //{
-            //    Directory.CreateDirectory(path);
-            //}
         }
         private void btnStart_Click(object sender, EventArgs e)
         {
@@ -71,9 +76,10 @@ namespace FictionCrawler
                     {
                         while (page < 6)
                         {
+                            if (stop) { break; }
                             fictionhtml = html.Html(page, url);
                             BookInfo(fictionhtml);
-                            MessageBox.Show("第" + page + "页爬取完成!");
+                            if (stop) { MessageBox.Show("已停止!"); } else { MessageBox.Show("第" + page + "页爬取完成!"); }
                             page++;
                         }
                     }
@@ -86,11 +92,13 @@ namespace FictionCrawler
                 {
                     btnStart.Text = "停止";
                     btnClear.Enabled = false;
+                    stop = false;
+                    startBook.IsBackground = true;
                     startBook.Start();
                 }
                 else
                 {
-                    startBook.Abort();
+                    stop = true;
                     btnStart.Text = "开始";
                     btnClear.Enabled = true;
                 }
@@ -99,6 +107,10 @@ namespace FictionCrawler
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+        private void ShowException()
+        {
+            throw new Exception("已停止");
         }
         public void BookInfo(string html)
         {
@@ -114,6 +126,7 @@ namespace FictionCrawler
                 {
                     for (int i = 0; i < 20; i++)
                     {
+                        if (stop) { break; }
                         var name = htmlDoc.DocumentNode.SelectNodes("//div[@class='book-mid-info']//h4/a")[i];
                         bookname = name.InnerText;
                         var info = htmlDoc.DocumentNode.SelectNodes("//div[@class='book-mid-info']//h4//a")[i].Attributes["href"].Value;
@@ -121,12 +134,16 @@ namespace FictionCrawler
 
                         if (Examine.IsNull(bookname, info, image))
                         {
+                            string path = "";
                             intro = getBookInfo.BookIntro(info);
                             id = getBookInfo.BookImage(bookname, image);
                             bookInfo.Add(bookname, intro);
                             getBookInfo.StreamFill(id, bookname, intro);
+                            GetBookInfoByHtml.bookIDCover.TryGetValue(bookname, out path);
+                            getBookInfo.StreamAll(bookname, intro, path);
                             this.Invoke(new Action(() => { lbInfo.Items.Add(bookname); }));
-                        }else
+                        }
+                        else
                         {
                             MessageBox.Show("未找到书籍!");
                         }
@@ -147,13 +164,13 @@ namespace FictionCrawler
                 {
                     if (MessageBox.Show("确定要删除吗？", "删除保存的书籍", MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
-                        Directory.Delete(path, true);
                         bookInfo.Clear();
                         GetBookInfoByHtml.bookIDCover.Clear();
                         lbInfo.Items.Clear();
                         txtBookName.Text = "";
                         txtBookIntro.Text = "";
                         pbFiction.Image = null;
+                        Directory.Delete(path, true);
                         if (Directory.Exists(path) == false)
                         {
                             MessageBox.Show("清除成功!");
@@ -166,30 +183,90 @@ namespace FictionCrawler
                 MessageBox.Show(ex.Message);
             }
         }
+        private void Loading()
+        {
+            try
+            {
+                string path = "D:\\Fiction";
+                DirectoryInfo fileInfo = new DirectoryInfo(path);
+                FileInfo[] file = fileInfo.GetFiles("All.txt");
+                StreamReader sr = new StreamReader(path + "\\All.txt", Encoding.UTF8);
+                while (!sr.EndOfStream)
+                {
+                    string bookInfo = sr.ReadLine();
+                    lbInfo.Items.Add(Examine.PattBookInfo(1, bookInfo));
+                }
+                isTrigger = false;
+                btnStart.Enabled = false;
+                btnClear.Enabled = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
 
+        }
         private void lbInfo_MouseClick(object sender, MouseEventArgs e)
         {
             try
             {
-                int index = lbInfo.IndexFromPoint(e.X, e.Y);
-                lbInfo.SelectedIndex = index;
-                if (lbInfo.SelectedIndex != -1)
+                if (isTrigger)
                 {
-                    string item = lbInfo.SelectedItem.ToString();
-                    string intro = string.Empty;
-                    string path = string.Empty;
-                    GetBookInfoByHtml.bookIDCover.TryGetValue(item, out path);
-                    if (bookInfo.ContainsKey(item) && bookInfo.TryGetValue(item, out intro) && path != "")
+                    int index = lbInfo.IndexFromPoint(e.X, e.Y);
+                    lbInfo.SelectedIndex = index;
+                    if (lbInfo.SelectedIndex != -1)
                     {
-                        txtBookName.Text = item;
-                        txtBookIntro.Text = intro;
-                        pbFiction.LoadAsync(@path);
+                        string item = lbInfo.SelectedItem.ToString();
+                        string intro = string.Empty;
+                        string path = string.Empty;
+                        GetBookInfoByHtml.bookIDCover.TryGetValue(item, out path);
+                        if (bookInfo.ContainsKey(item) && bookInfo.TryGetValue(item, out intro) && path != "")
+                        {
+                            txtBookName.Text = item;
+                            txtBookIntro.Text = intro;
+                            pbFiction.LoadAsync(@path);
+                        }
+                    }
+                }
+                else
+                {
+                    int index = lbInfo.IndexFromPoint(e.X, e.Y);
+                    lbInfo.SelectedIndex = index;
+                    if (lbInfo.SelectedIndex != -1)
+                    {
+                        string item = lbInfo.SelectedItem.ToString();
+                        SelectBookInfo(item);
                     }
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+            }
+        }
+        private void SelectBookInfo(string bookname)
+        {
+            try
+            {
+                string path = "D:\\Fiction";
+                if (Directory.Exists(path))
+                {
+                    StreamReader sr = new StreamReader(path + "\\All.txt", Encoding.UTF8);
+                    while (!sr.EndOfStream)
+                    {
+                        string bookInfo = sr.ReadLine();
+                        if (bookInfo.Contains(bookname))
+                        {
+                            txtBookName.Text = Examine.PattBookInfo(1, bookInfo);
+                            pbFiction.LoadAsync(Examine.PattBookInfo(2, bookInfo));
+                            txtBookIntro.Text = Examine.PattBookInfo(3, bookInfo);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
             }
         }
     }

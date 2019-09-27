@@ -19,6 +19,34 @@ namespace FictionCrawler.CommVerify
             //return ma[0].Value;
             return math.Value.Replace("/", "");
         }
+        public static string PattBookInfo(int index, string str)
+        {
+            if (index == 1)
+            {
+                var s = "书名：(.*?)[封$]";
+                Regex ss = new Regex(s);
+                Match math = ss.Match(str);
+                return math.Groups[1].Value;
+            }
+            else if (index == 2)
+            {
+                var s = "封面：(.*?)[简$]";
+                Regex ss = new Regex(s);
+                Match math = ss.Match(str);
+                return math.Groups[1].Value;
+            }
+            else if (index == 3)
+            {
+                var s = "简介：(.*?)$";
+                Regex ss = new Regex(s);
+                Match math = ss.Match(str);
+                return math.Groups[1].Value;
+            }
+            else
+            {
+                return "";
+            }
+        }
         public static bool IsNull(string name,string info,string image)
         {
             if(name == null || info == null || image == null)
